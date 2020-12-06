@@ -1,0 +1,15 @@
+{
+	"name": "roblox-ts-model",
+	"tree": {
+		"$className": "Folder",
+		"Main": {
+			"$path": "out",
+			"include": {
+				"$path": "include",
+				"node_modules": {
+					"$path": "node_modules/@rbxts"
+				}
+			}
+		}
+	}
+}

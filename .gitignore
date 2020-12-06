@@ -39,3 +39,9 @@ luac.out
 *.x86_64
 *.hex
 
+/node_modules
+/out
+/include
+*.tsbuildinfo
+
+*.rbxl
