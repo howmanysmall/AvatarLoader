@@ -1,4 +1,3 @@
-local HttpPromise = require(script.HttpPromise)
 local Privates = require(script.Privates)
 
 local POST_METHODS = {"POST", "PUT", "PATCH"}

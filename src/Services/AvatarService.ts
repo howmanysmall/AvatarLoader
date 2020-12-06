@@ -62,24 +62,22 @@ export default class AvatarService {
 	 * @return {Promise<Array<Outfit>>} A promise that returns an array of outfits.
 	 */
 	public GetOutfits(userId: number, pageNumber = 1): Promise<Array<Outfit>> {
-		return new Promise<Array<Outfit>>((resolve, reject) =>
-			Promise.spawn(() => {
-				const outfitResponse = ProxyService.Get(AVATAR_URLS.GetOutfits.format(userId, pageNumber), true);
-				if (outfitResponse.StatusMessage === "OK") {
-					const result: OpcallResult<OutfitBody> = opcall(() => HttpService.JSONDecode(outfitResponse.Body));
-					if (result.success) {
-						const playerOutfits: Array<Outfit> = new Array<Outfit>(result.value.total);
-						for (const outfitData of result.value.data)
-							playerOutfits.push({
-								Name: outfitData.name,
-								OutfitId: outfitData.id,
-							});
+		return Promise.defer((resolve, reject) => {
+			const outfitResponse = ProxyService.Get(AVATAR_URLS.GetOutfits.format(userId, pageNumber), true);
+			if (outfitResponse.StatusMessage === "OK") {
+				const result: OpcallResult<OutfitBody> = opcall(() => HttpService.JSONDecode(outfitResponse.Body));
+				if (result.success) {
+					const playerOutfits: Array<Outfit> = new Array<Outfit>(result.value.total);
+					for (const outfitData of result.value.data)
+						playerOutfits.push({
+							Name: outfitData.name,
+							OutfitId: outfitData.id,
+						});
 
-						resolve(playerOutfits);
-					} else reject(`Failed to decode data: ${result.error}`);
-				} else reject(`Failed to get outfits: ${outfitResponse.StatusMessage}`);
-			}),
-		);
+					resolve(playerOutfits);
+				} else reject(`Failed to decode data: ${result.error}`);
+			} else reject(`Failed to get outfits: ${outfitResponse.StatusMessage}`);
+		});
 	}
 
 	/**

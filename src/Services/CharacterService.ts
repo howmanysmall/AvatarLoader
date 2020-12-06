@@ -32,7 +32,7 @@ export default class CharacterService {
 			model.Parent = Workspace;
 
 			const modelYield = new Ready(model, 1);
-			for (const [index, outfit] of outfits.entries()) {
+			for (const [index, outfit] of ipairs(outfits)) {
 				const thread = coroutine.create(() => {
 					this.GenerateCharacter(
 						model,
@@ -48,7 +48,7 @@ export default class CharacterService {
 			modelYield.Wait();
 			modelYield.Destroy();
 
-			for (const [index, child] of (<Array<Model>>model.GetChildren()).entries())
+			for (const [index, child] of ipairs(<Array<Model>>model.GetChildren()))
 				child.SetPrimaryPartCFrame(outfitLocation.sub(new Vector3(index * 4, 0, 0)));
 
 			for (const descendant of model.GetDescendants()) if (descendant.IsA("BasePart")) descendant.Locked = false;
@@ -64,49 +64,47 @@ export default class CharacterService {
 	 * @return {Promise<Model>} This function returns a promise that returns the character models if the outfits were loaded successfully.
 	 */
 	public LoadCharacters(userId: number, outfitLocation: CFrame): Promise<Model> {
-		return new Promise<Model>((resolve, reject) =>
-			Promise.spawn(() => {
-				const outfits = this.avatarService.GetOutfitsAsync(userId, 1);
-				if (!typeIs(outfits, "string")) {
-					const total = outfits.size();
-					const totalCFrame = new CFrame(total, 0, 0);
-					const totalRadians = math.rad(360 / total);
+		return Promise.defer((resolve, reject) => {
+			const outfits = this.avatarService.GetOutfitsAsync(userId, 1);
+			if (!typeIs(outfits, "string")) {
+				const total = outfits.size();
+				const totalCFrame = new CFrame(total, 0, 0);
+				const totalRadians = math.rad(360 / total);
 
-					const model = new Instance("Model");
-					model.Name = tostring(userId);
-					model.Parent = Workspace;
+				const model = new Instance("Model");
+				model.Name = tostring(userId);
+				model.Parent = Workspace;
 
-					const modelYield = new Ready(model, 1);
-					for (const [index, outfit] of outfits.entries()) {
-						const thread = coroutine.create(() => {
-							this.GenerateCharacter(
-								model,
-								outfit.OutfitId,
-								outfit.Name,
-								outfitLocation.mul(CFrame.Angles(0, totalRadians * index, 0)).mul(totalCFrame),
-							);
-						});
+				const modelYield = new Ready(model, 1);
+				for (const [index, outfit] of ipairs(outfits)) {
+					const thread = coroutine.create(() => {
+						this.GenerateCharacter(
+							model,
+							outfit.OutfitId,
+							outfit.Name,
+							outfitLocation.mul(CFrame.Angles(0, totalRadians * index, 0)).mul(totalCFrame),
+						);
+					});
 
-						coroutine.resume(thread);
-					}
-
-					modelYield.Wait();
-					modelYield.Destroy();
-
-					for (const [index, child] of (<Array<Model>>model.GetChildren()).entries())
-						child.SetPrimaryPartCFrame(outfitLocation.sub(new Vector3(index * 4, 0, 0)));
-
-					for (const descendant of model.GetDescendants())
-						if (descendant.IsA("BasePart")) descendant.Locked = false;
-
-					this.AvatarsLoaded.Fire(model);
-					resolve(model);
-				} else {
-					this.LoadFailed.Fire(outfits);
-					reject(outfits);
+					coroutine.resume(thread);
 				}
-			}),
-		);
+
+				modelYield.Wait();
+				modelYield.Destroy();
+
+				for (const [index, child] of ipairs(<Array<Model>>model.GetChildren()))
+					child.SetPrimaryPartCFrame(outfitLocation.sub(new Vector3(index * 4, 0, 0)));
+
+				for (const descendant of model.GetDescendants())
+					if (descendant.IsA("BasePart")) descendant.Locked = false;
+
+				this.AvatarsLoaded.Fire(model);
+				resolve(model);
+			} else {
+				this.LoadFailed.Fire(outfits);
+				reject(outfits);
+			}
+		});
 	}
 
 	/**

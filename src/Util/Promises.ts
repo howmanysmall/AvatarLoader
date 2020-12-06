@@ -20,25 +20,41 @@ export function promiseDecode<T>(jsonString: string): Promise<T> {
 }
 
 /**
- * Returns a Promise that sends an HTTP GET request using `HttpService:GetAsync`.
+ * Sends an http request using `HttpService:RequestAsync`.
+ * @param {RequestAsyncRequest} requestDictionary The request options you are sending with.
+ * @return {Promise<RequestAsyncResponse>} A promise that returns the response dictionary.
+ */
+export function promiseRequest(requestDictionary: RequestAsyncRequest): Promise<RequestAsyncResponse> {
+	return Promise.defer((resolve, reject) => {
+		const result: OpcallResult<RequestAsyncResponse> = opcall(() => HttpService.RequestAsync(requestDictionary));
+		if (result.success)
+			if (result.value.Success) resolve(result.value);
+			else reject("HTTP %d: %s".format(result.value.StatusCode, result.value.StatusMessage));
+		else reject(result.error);
+	});
+}
+
+/**
+ * Returns a Promise that sends an HTTP GET request using `HttpService:RequestAsync`.
  * @param {string} url The web address you are requesting data from.
  * @param {boolean=false} noCache Whether the request stores (caches) the response. Defaults to false.
- * @param {Record<string, string> | Map<string, string> | undefined} headers Used to specify some HTTP request headers.
+ * @param {Map<string, string>?} headers Used to specify some HTTP request headers.
  * @return {Promise<string>} A Promise that returns the result of the GET request.
  */
-export function promiseGet(
-	url: string,
-	noCache = false,
-	headers?: Record<string, string> | Map<string, string> | undefined,
-): Promise<string> {
-	if (!IS_SERVER) return Promise.reject("promiseGet cannot be called on the client!");
-	return new Promise<string>((resolve, reject) =>
-		Promise.spawn(() => {
-			const result: OpcallResult<string> = opcall(() => HttpService.GetAsync(url, noCache, headers));
-			if (result.success) resolve(result.value);
-			else reject(result.error);
-		}),
-	);
+export function promiseGet(url: string, noCache = false, headers = new Map<string, string>()): Promise<string> {
+	if (noCache) headers.set("Cache-Control", "no-cache");
+	const requestDictionary: RequestAsyncRequest = {
+		Url: url,
+		Method: "GET",
+		Headers: headers,
+	};
+
+	return promiseRequest(requestDictionary).then((responseDictionary) => responseDictionary.Body);
+	// return Promise.defer((resolve, reject) => {
+	// 	const result: OpcallResult<string> = opcall(() => HttpService.GetAsync(url, noCache, headers));
+	// 	if (result.success) resolve(result.value);
+	// 	else reject(result.error);
+	// });
 }
 
 /**
@@ -53,21 +69,36 @@ export function promiseGet(
 export function promisePost(
 	url: string,
 	data: string,
-	contentType = Enum.HttpContentType.ApplicationJson,
+	contentType: Enum.HttpContentType = Enum.HttpContentType.ApplicationJson,
 	compress = false,
-	headers?: Record<string, string> | Map<string, string> | undefined,
+	headers = new Map<string, string>(),
 ): Promise<string> {
-	if (!IS_SERVER) return Promise.reject("promisePost cannot be called on the client!");
-	return new Promise<string>((resolve, reject) =>
-		Promise.spawn(() => {
+	if (compress)
+		return Promise.defer((resolve, reject) => {
 			const result: OpcallResult<string> = opcall(() =>
 				HttpService.PostAsync(url, data, contentType, compress, headers),
 			);
 
 			if (result.success) resolve(result.value);
 			else reject(result.error);
-		}),
-	);
+		});
+	else {
+		if (contentType === Enum.HttpContentType.ApplicationJson) headers.set("content-type", "application/json");
+		else if (contentType === Enum.HttpContentType.ApplicationUrlEncoded)
+			headers.set("content-type", "x-www-form-urlencoded");
+		else if (contentType === Enum.HttpContentType.ApplicationXml) headers.set("content-type", "application/xml");
+		else if (contentType === Enum.HttpContentType.TextPlain) headers.set("content-type", "text/plain");
+		else if (contentType === Enum.HttpContentType.TextXml) headers.set("content-type", "text/xml");
+
+		const requestDictionary: RequestAsyncRequest = {
+			Body: data,
+			Headers: headers,
+			Method: "POST",
+			Url: url,
+		};
+
+		return promiseRequest(requestDictionary).then((responseDictionary) => responseDictionary.Body);
+	}
 }
 
 // Promises for `Players`.
@@ -78,13 +109,11 @@ export function promisePost(
  * @return {Promise<number>} A promise that returns the player's `UserId`.
  */
 export function promiseUserIdFromName(username: string): Promise<number> {
-	return new Promise<number>((resolve, reject) =>
-		Promise.spawn(() => {
-			const result: OpcallResult<number> = opcall(() => Players.GetUserIdFromNameAsync(username));
-			if (result.success) resolve(result.value);
-			else reject(result.error);
-		}),
-	);
+	return Promise.defer((resolve, reject) => {
+		const result: OpcallResult<number> = opcall(() => Players.GetUserIdFromNameAsync(username));
+		if (result.success) resolve(result.value);
+		else reject(result.error);
+	});
 }
 
 /**
@@ -93,16 +122,14 @@ export function promiseUserIdFromName(username: string): Promise<number> {
  * @returns {Promise<HumanoidDescription>} A promise that returns the player's `HumanoidDescription`.
  */
 export function promiseHumanoidDescriptionFromUserId(userId: number): Promise<HumanoidDescription> {
-	return new Promise<HumanoidDescription>((resolve, reject) =>
-		Promise.spawn(() => {
-			const result: OpcallResult<HumanoidDescription> = opcall(() =>
-				Players.GetHumanoidDescriptionFromUserId(userId),
-			);
+	return Promise.defer((resolve, reject) => {
+		const result: OpcallResult<HumanoidDescription> = opcall(() =>
+			Players.GetHumanoidDescriptionFromUserId(userId),
+		);
 
-			if (result.success) resolve(result.value);
-			else reject(result.error);
-		}),
-	);
+		if (result.success) resolve(result.value);
+		else reject(result.error);
+	});
 }
 
 /**
@@ -111,16 +138,14 @@ export function promiseHumanoidDescriptionFromUserId(userId: number): Promise<Hu
  * @returns {Promise<HumanoidDescription>} A promise that returns the outfit's `HumanoidDescription`.
  */
 export function promiseHumanoidDescriptionFromOutfitId(outfitId: number): Promise<HumanoidDescription> {
-	return new Promise<HumanoidDescription>((resolve, reject) =>
-		Promise.spawn(() => {
-			const result: OpcallResult<HumanoidDescription> = opcall(() =>
-				Players.GetHumanoidDescriptionFromOutfitId(outfitId),
-			);
+	return Promise.defer((resolve, reject) => {
+		const result: OpcallResult<HumanoidDescription> = opcall(() =>
+			Players.GetHumanoidDescriptionFromOutfitId(outfitId),
+		);
 
-			if (result.success) resolve(result.value);
-			else reject(result.error);
-		}),
-	);
+		if (result.success) resolve(result.value);
+		else reject(result.error);
+	});
 }
 
 const MAX_TRIES = 5;
@@ -132,32 +157,30 @@ export function promiseUserThumbnail(
 ): Promise<string> {
 	let promise: Promise<string>;
 	// eslint-disable-next-line prefer-const
-	promise = new Promise<string>((resolve, reject, onCancel) =>
-		Promise.spawn(() => {
-			let tries = 0;
-			let shouldBreak = false;
-			onCancel(() => (shouldBreak = true));
+	promise = Promise.defer((resolve, reject, onCancel) => {
+		let tries = 0;
+		let shouldBreak = false;
+		onCancel(() => (shouldBreak = true));
 
-			do {
+		do {
+			if (shouldBreak) break;
+			tries += 1;
+			let content = "";
+			let isReady = false;
+
+			const result: OpcallResult<void> = opcall(() => {
+				[content, isReady] = Players.GetUserThumbnailAsync(userId, thumbnailType, thumbnailSize);
+			});
+
+			if (!result.success) reject(result.error);
+			else {
 				if (shouldBreak) break;
-				tries++;
-				let content = "";
-				let isReady = false;
-
-				const result: OpcallResult<void> = opcall(() => {
-					[content, isReady] = Players.GetUserThumbnailAsync(userId, thumbnailType, thumbnailSize);
-				});
-
-				if (!result.success) reject(result.error);
-				else {
-					if (shouldBreak) break;
-					if (isReady) resolve(content);
-					else smartWait(0.05);
-				}
-			} while (!(tries >= MAX_TRIES || !promise.isPending() || !shouldBreak));
-			reject();
-		}),
-	);
+				if (isReady) resolve(content);
+				else Promise.delay(0.05).await();
+			}
+		} while (!(tries >= MAX_TRIES || promise.getStatus() !== Promise.Status.Started || !shouldBreak));
+		reject();
+	});
 
 	return promise;
 }
@@ -171,13 +194,11 @@ export function promiseUserThumbnail(
  * @return {Promise<void>} A promise that calls `Humanoid:ApplyDescription`.
  */
 export function promiseApplyDescription(humanoid: Humanoid, humanoidDescription: HumanoidDescription): Promise<void> {
-	return new Promise<void>((resolve, reject) =>
-		Promise.spawn(() => {
-			const result: OpcallResult<void> = opcall(() => humanoid.ApplyDescription(humanoidDescription));
-			if (result.success) resolve();
-			else reject(result.error);
-		}),
-	);
+	return Promise.defer((resolve, reject) => {
+		const result: OpcallResult<void> = opcall(() => humanoid.ApplyDescription(humanoidDescription));
+		if (result.success) resolve();
+		else reject(result.error);
+	});
 }
 
 /**
@@ -207,14 +228,12 @@ export function promiseGetObject<T extends Instance>(assetId: number): Promise<T
 	let object = objectsArray[assetId];
 	if (object !== undefined) return Promise.resolve((<T>object).Clone());
 
-	return new Promise<T>((resolve, reject) =>
-		Promise.spawn(() => {
-			const result: OpcallResult<Instance[]> = opcall(() => game.GetObjects(`rbxassetid://${assetId}`));
-			if (result.success) {
-				object = <T>result.value[0];
-				objectsArray[assetId] = object;
-				resolve((<T>object).Clone());
-			} else reject(result.error);
-		}),
-	);
+	return Promise.defer((resolve, reject) => {
+		const result: OpcallResult<Instance[]> = opcall(() => game.GetObjects(`rbxassetid://${assetId}`));
+		if (result.success) {
+			object = <T>result.value[0];
+			objectsArray[assetId] = object;
+			resolve((<T>object).Clone());
+		} else reject(result.error);
+	});
 }

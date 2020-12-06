@@ -77,9 +77,19 @@ end
 	@returns [tPlus:promise] A promise which calls HttpService:GetAsync.
 **--]]
 function HttpPromise.promiseGet(url, noCache, headers)
-	return Promise.defer(function(resolve, reject)
-		local success, value = pcall(HttpService.GetAsync, HttpService, url, noCache ~= nil and noCache or false, headers);
-		(success and resolve or reject)(value)
+	headers = headers or {}
+	if noCache then
+		headers["cache-control"] = "no-cache"
+	end
+
+	local requestDictionary = {
+		Url = url;
+		Method = "GET";
+		Headers = headers;
+	}
+
+	return HttpPromise.promiseRequest(requestDictionary):andThen(function(response)
+		return response.Body
 	end)
 end
 
@@ -94,13 +104,39 @@ end
 	@returns [tPlus:promise] A promise which calls HttpService:PostAsync.
 **--]]
 function HttpPromise.promisePost(url, data, contentType, compress, headers)
+	headers = headers or {}
 	contentType = contentType or Enum.HttpContentType.ApplicationJson
-	compress = compress ~= nil and compress or compress
+	compress = compress == nil and false or compress
 
-	return Promise.defer(function(resolve, reject)
-		local success, value = pcall(HttpService.PostAsync, HttpService, url, data, contentType, compress, headers);
-		(success and resolve or reject)(value)
-	end)
+	if compress then
+		return Promise.defer(function(Resolve, Reject)
+			local Success, Value = pcall(HttpService.PostAsync, HttpService, url, data, contentType, compress, headers);
+			(Success and Resolve or Reject)(Value)
+		end)
+	else
+		if contentType == Enum.HttpContentType.ApplicationJson then
+			headers["content-type"] = "application/json"
+		elseif contentType == Enum.HttpContentType.ApplicationUrlEncoded then
+			headers["content-type"] = "application/x-www-form-urlencoded"
+		elseif contentType == Enum.HttpContentType.ApplicationXml then
+			headers["content-type"] = "application/xml"
+		elseif contentType == Enum.HttpContentType.TextPlain then
+			headers["content-type"] = "text/plain"
+		elseif contentType == Enum.HttpContentType.TextXml then
+			headers["content-type"] = "text/xml"
+		end
+
+		local RequestDictionary = {
+			Url = url;
+			Method = "POST";
+			Headers = headers;
+			Body = data;
+		}
+
+		return HttpPromise.promiseRequest(RequestDictionary):andThen(function(response)
+			return response.Body
+		end)
+	end
 end
 
 return HttpPromise

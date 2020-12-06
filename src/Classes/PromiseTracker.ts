@@ -9,7 +9,7 @@ export default class PromiseTracker {
 	 * @returns {Promise<T>} The same promise that was passed.
 	 */
 	public Add<T>(promise: Promise<T>): Promise<T> {
-		if (promise.isPending()) {
+		if (promise.getStatus() === Promise.Status.Started) {
 			this.pendingPromises.add(promise);
 			promise.finally(() => this.pendingPromises.delete(promise));
 		}

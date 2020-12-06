@@ -27,7 +27,7 @@ export default class PluginFrame extends Roact.Component<{}, PluginFrameState> {
 	constructor() {
 		super({});
 		this.setState({
-			currentUserId: 16492520,
+			currentUserId: 156,
 		});
 	}
 

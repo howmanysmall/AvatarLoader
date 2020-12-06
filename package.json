@@ -21,7 +21,7 @@
     "typescript": "^4.0.5"
   },
   "dependencies": {
-    "@rbxts/compiler-types": "^1.0.0-beta.4.0",
+    "@rbxts/compiler-types": "^1.0.0-beta.6.2",
     "@rbxts/delay-spawn-wait": "^1.0.3",
     "@rbxts/flipper": "^1.2.0",
     "@rbxts/http-queue": "^1.1.0",

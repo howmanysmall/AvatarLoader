@@ -1,6 +1,4 @@
 import Maid from "@rbxts/maid";
-import { wait as smartWait } from "@rbxts/delay-spawn-wait";
-
 type DescendantAdded = (descendant: Instance) => void;
 
 // Original: https://github.com/EmeraldSlash/RbxReady/
@@ -30,7 +28,7 @@ export default class Ready {
 			}),
 		);
 
-		while (os.clock() - timestamp <= this.timeout) smartWait(0.03);
+		while (os.clock() - timestamp <= this.timeout) Promise.delay(0.03).await();
 		this.maid[id] = undefined;
 		return lastDescendant;
 	}
@@ -48,7 +46,7 @@ export default class Ready {
 		const logDescendant = (descendant: Instance) => {
 			const localTimestamp = os.clock();
 			timestamp = localTimestamp;
-			smartWait(this.timeout);
+			Promise.delay(this.timeout).await();
 
 			if (timestamp === localTimestamp && (<RBXScriptConnection>this.maid[id]).Connected) {
 				this.maid[id] = undefined;
