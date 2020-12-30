@@ -1,5 +1,8 @@
 {
 	"recommendations": [
-		"dbaeumer.vscode-eslint"
+		"dbaeumer.vscode-eslint",
+		"ms-vscode.vscode-typescript-tslint-plugin",
+		"evaera.roblox-api-explorer",
+		"evaera.vscode-rojo"
 	]
 }

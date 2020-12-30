@@ -63,7 +63,7 @@ export default class Ready {
 	/**
 	 * Destroys the object and cleans up any connections.
 	 */
-	public Destroy(): void {
+	public Destroy() {
 		this.maid.Destroy();
 	}
 }

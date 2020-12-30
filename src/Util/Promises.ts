@@ -1,8 +1,5 @@
-import { Players, HttpService, RunService } from "@rbxts/services";
-import { wait as smartWait } from "@rbxts/delay-spawn-wait";
+import { Players, HttpService } from "@rbxts/services";
 import { OpcallResult } from "../Typings/GlobalTypes";
-
-const IS_SERVER: boolean = RunService.IsServer();
 
 // Promises for `HttpService`.
 

@@ -162,7 +162,7 @@ export default class CharacterService {
 		if (!success) {
 			do {
 				[success] = promiseApplyDescription(humanoid, humanoidDescription).await();
-				attempts++;
+				attempts += 1;
 				smartWait(0.03);
 			} while (!(success || attempts >= maxAttempts));
 

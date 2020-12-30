@@ -1,19 +1,10 @@
-import Roact from "@rbxts/roact";
-import {
-	// StudioScrollingFrame,
-	StudioFrame,
-	// StudioImageButton,
-	StudioTextBox,
-	StudioTextButton,
-	StudioTextLabel,
-	// StudioToggle,
-} from "@rbxts/roact-studio-components";
-
+import { promiseUserIdFromName } from "../Util/Promises";
+import { StudioFrame, StudioTextBox, StudioTextButton, StudioTextLabel } from "@rbxts/roact-studio-components";
+import catchFactory from "Util/catchFactory";
 import CharacterService from "Services/CharacterService";
 import PaddingFrame from "./PaddingFrame";
-import { promiseUserIdFromName } from "../Util/Promises";
-import catchFactory from "Util/catchFactory";
 import PromiseTracker from "Classes/PromiseTracker";
+import Roact from "@rbxts/roact";
 
 interface PluginFrameState {
 	currentUserId: number;

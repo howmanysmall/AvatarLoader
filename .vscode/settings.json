@@ -10,5 +10,8 @@
 	"eslint.run": "onType",
 	"eslint.format.enable": true,
 	"typescript.tsdk": "node_modules/typescript/lib",
-	"files.eol": "\n"
+	"files.eol": "\n",
+	"cSpell.words": [
+		"rbxts"
+	]
 }
